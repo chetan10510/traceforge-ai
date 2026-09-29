@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+.env
+data/runs/*.json
+.openai/hosting.json
+.DS_Store
+

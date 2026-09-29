@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="TraceForge AI turns public web evidence into auditable company intelligence.">
+  <title>TraceForge AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <header class="app-header">
+    <a class="brand" href="/" aria-label="TraceForge home">
+      <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+      <span><strong>TraceForge</strong><small>Evidence intelligence</small></span>
+    </a>
+    <div class="header-center"><span class="environment"><i></i>Public-data sandbox</span></div>
+    <div class="header-actions">
+      <button id="newRunBtn" class="quiet-button hidden">New investigation</button>
+      <a class="docs-link" href="#methodology">Methodology</a>
+      <span class="privacy-chip">No personal data</span>
+    </div>
+  </header>
+
+  <main>
+    <section id="startView" class="start-view">
+      <div class="start-copy">
+        <p class="kicker"><span></span>Live connector and AI engineering demo</p>
+        <h1>Investigate a company.<br><em>Verify every claim.</em></h1>
+        <p class="lede">Enter any public company domain. TraceForge collects independent sources, resolves contradictions, and builds an evidence-backed company record you can challenge.</p>
+
+        <form id="domainForm" class="domain-form">
+          <label for="domainInput">Company domain</label>
+          <div class="domain-control">
+            <span>https://</span>
+            <input id="domainInput" name="domain" autocomplete="url" placeholder="stripe.com" required>
+            <button type="submit">Start investigation <b>→</b></button>
+          </div>
+          <p id="domainError" class="input-error" role="alert"></p>
+        </form>
+
+        <div class="examples">
+          <span>Try an example</span>
+          <button data-domain="stripe.com">stripe.com</button>
+          <button data-domain="notion.so">notion.so</button>
+          <button data-domain="razorpay.com">razorpay.com</button>
+        </div>
+      </div>
+
+      <div class="process-preview" aria-label="Investigation process preview">
+        <div class="preview-head"><span>RUN PREVIEW</span><b>Evidence before answers</b></div>
+        <div class="preview-flow">
+          <article><span>01</span><div><strong>Discover</strong><small>Map public sources</small></div><i class="pulse"></i></article>
+          <article><span>02</span><div><strong>Collect</strong><small>Run typed connectors</small></div><i></i></article>
+          <article><span>03</span><div><strong>Resolve</strong><small>Compare claims</small></div><i></i></article>
+          <article><span>04</span><div><strong>Verify</strong><small>Attach citations</small></div><i></i></article>
+        </div>
+        <div class="preview-terminal">
+          <p><span>✓</span> Provider responses remain separate</p>
+          <p><span>✓</span> No-match is not treated as failure</p>
+          <p><span>✓</span> Unsupported AI claims are rejected</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="workspaceView" class="workspace-view hidden">
+      <header class="workspace-header">
+        <div>
+          <div class="target-line"><span id="targetMonogram">?</span><div><p>INVESTIGATION</p><h1 id="targetDomain">company.com</h1></div></div>
+          <div id="runMeta" class="run-meta">Preparing run</div>
+        </div>
+        <div class="workspace-actions">
+          <button id="exportBtn" class="outline-button" disabled>Export evidence</button>
+          <button id="conflictBtn" class="outline-button" disabled>Inject test conflict</button>
+          <span id="runStatus" class="run-status running"><i></i>Running</span>
+        </div>
+      </header>
+
+      <div class="workspace-grid">
+        <aside class="run-rail">
+          <div class="rail-head"><p>Pipeline execution</p><strong id="progressLabel">0%</strong></div>
+          <div class="progress-track"><i id="progressBar"></i></div>
+          <div id="stageList" class="stage-list"></div>
+
+          <div class="provider-section">
+            <div class="section-label"><span>Connectors</span><small id="providerCount">0 / 3</small></div>
+            <div id="providerList" class="provider-list">
+              <p class="muted">Providers appear as they settle.</p>
+            </div>
+          </div>
+        </aside>
+
+        <section class="investigation-canvas">
+          <div id="runningState" class="running-state">
+            <div class="scan-visual"><i></i><span></span><span></span><span></span></div>
+            <p id="runningEyebrow">VALIDATING TARGET</p>
+            <h2 id="runningTitle">Preparing the investigation</h2>
+            <span id="runningDetail">The first provider results will appear here.</span>
+          </div>
+
+          <div id="resultsState" class="results-state hidden">
+            <section class="briefing-band">
+              <p class="section-kicker">Resolved identity</p>
+              <h2 id="companyName">Company profile</h2>
+              <p id="companySummary">No supported summary was returned.</p>
+              <div id="profileFacts" class="profile-facts"></div>
+            </section>
+
+            <section class="claims-section">
+              <div class="section-head">
+                <div><p class="section-kicker">Canonical claim ledger</p><h2>What the evidence supports</h2></div>
+                <div class="quality-strip"><span><b id="coverageMetric">0%</b>Citation coverage</span><span><b id="confidenceMetric">0%</b>Avg confidence</span><span><b id="conflictMetric">0</b>Conflicts</span></div>
+              </div>
+              <div id="claimsList" class="claims-list"></div>
+            </section>
+          </div>
+        </section>
+
+        <aside class="evidence-pane">
+          <div class="pane-tabs">
+            <button class="active" data-pane="evidence">Evidence <span id="evidenceCount">0</span></button>
+            <button data-pane="events">Run log</button>
+          </div>
+          <div id="evidencePane" class="pane-content"></div>
+          <div id="eventsPane" class="pane-content hidden"></div>
+        </aside>
+      </div>
+
+      <section id="askBar" class="ask-bar hidden">
+        <div><span class="ai-mark">✦</span><div><strong>Ask the evidence</strong><small>Answers are limited to this investigation’s claim ledger.</small></div></div>
+        <form id="askForm"><input id="questionInput" placeholder="What products does this company offer?" maxlength="600"><button type="submit">Ask →</button></form>
+      </section>
+    </section>
+
+    <section id="methodology" class="methodology">
+      <div><p class="section-kicker">Engineering method</p><h2>Designed like a data product, not a chatbot.</h2></div>
+      <div class="method-grid"><p><b>Typed connectors</b><span>Every source reports health, latency, status, records, and errors through one contract.</span></p><p><b>Immutable evidence</b><span>Raw provider evidence is retained separately from normalized claims.</span></p><p><b>Constrained AI</b><span>The model may cite only URLs gathered during the active run.</span></p><p><b>Honest quality</b><span>Success, no-match, provider error, conflicts, and fallback behavior remain visible.</span></p></div>
+    </section>
+  </main>
+
+  <dialog id="answerDialog" class="answer-dialog">
+    <header><div><span class="ai-mark">✦</span><div><p>EVIDENCE ANSWER</p><h2 id="answerQuestion">Question</h2></div></div><button id="closeAnswer" aria-label="Close">×</button></header>
+    <div class="answer-body"><p id="answerText"></p><div id="answerCitations"></div></div>
+  </dialog>
+
+  <div id="toast" class="toast hidden" role="status"></div>
+  <script src="./app.js"></script>
+</body>
+</html>
