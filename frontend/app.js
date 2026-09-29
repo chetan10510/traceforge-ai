@@ -8,6 +8,7 @@ const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
 
 const elements = {
+  welcomeView: $("#welcomeView"),
   startView: $("#startView"),
   workspaceView: $("#workspaceView"),
   domainForm: $("#domainForm"),
@@ -49,6 +50,13 @@ const elements = {
   answerCitations: $("#answerCitations"),
   toast: $("#toast"),
 };
+
+$("#beginBtn").addEventListener("click", showTargetStep);
+$("#welcomeBackBtn").addEventListener("click", showWelcome);
+$(".brand").addEventListener("click", (event) => {
+  event.preventDefault();
+  showWelcome();
+});
 
 elements.domainForm.addEventListener("submit", (event) => {
   event.preventDefault();
@@ -114,6 +122,7 @@ function schedulePoll() {
 }
 
 function showWorkspace(domain) {
+  elements.welcomeView.classList.add("hidden");
   elements.startView.classList.add("hidden");
   elements.workspaceView.classList.remove("hidden");
   elements.newRunBtn.classList.remove("hidden");
@@ -125,19 +134,54 @@ function showWorkspace(domain) {
   elements.targetDomain.textContent = domain;
   elements.targetMonogram.textContent = domain.charAt(0).toUpperCase();
   elements.runMeta.textContent = "Creating typed connector run";
+  setProgress("investigation");
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 function resetWorkspace() {
   clearTimeout(state.pollTimer);
   state.run = null;
+  elements.welcomeView.classList.add("hidden");
   elements.workspaceView.classList.add("hidden");
   elements.startView.classList.remove("hidden");
   elements.newRunBtn.classList.add("hidden");
   elements.domainInput.value = "";
   elements.domainError.textContent = "";
+  setProgress("target");
   elements.domainInput.focus();
   window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function showTargetStep() {
+  elements.welcomeView.classList.add("hidden");
+  elements.workspaceView.classList.add("hidden");
+  elements.startView.classList.remove("hidden");
+  elements.newRunBtn.classList.add("hidden");
+  setProgress("target");
+  window.scrollTo({ top: 0, behavior: "smooth" });
+  window.setTimeout(() => elements.domainInput.focus(), 250);
+}
+
+function showWelcome() {
+  clearTimeout(state.pollTimer);
+  state.run = null;
+  elements.startView.classList.add("hidden");
+  elements.workspaceView.classList.add("hidden");
+  elements.welcomeView.classList.remove("hidden");
+  elements.newRunBtn.classList.add("hidden");
+  elements.domainError.textContent = "";
+  setProgress("welcome");
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function setProgress(activeStep) {
+  const steps = ["welcome", "target", "investigation"];
+  const activeIndex = steps.indexOf(activeStep);
+  $$('[data-progress]').forEach((item) => {
+    const index = steps.indexOf(item.dataset.progress);
+    item.classList.toggle("active", index === activeIndex);
+    item.classList.toggle("complete", index < activeIndex);
+  });
 }
 
 function render(run) {
@@ -446,8 +490,11 @@ function toast(message) {
   toastTimer = setTimeout(() => elements.toast.classList.add("hidden"), 3500);
 }
 
-const linkedDomain = new URLSearchParams(window.location.search).get("domain");
+const urlParams = new URLSearchParams(window.location.search);
+const linkedDomain = urlParams.get("domain");
 if (linkedDomain) {
   elements.domainInput.value = linkedDomain;
   startInvestigation(linkedDomain);
+} else if (urlParams.get("step") === "target") {
+  showTargetStep();
 }

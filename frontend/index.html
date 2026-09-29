@@ -16,7 +16,15 @@
       <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
       <span><strong>TraceForge</strong><small>Evidence intelligence</small></span>
     </a>
-    <div class="header-center"><span class="environment"><i></i>Public-data sandbox</span></div>
+    <div class="header-center">
+      <div id="journeyProgress" class="journey-progress" aria-label="Demo progress">
+        <span class="active" data-progress="welcome"><i>1</i>Welcome</span>
+        <b></b>
+        <span data-progress="target"><i>2</i>Target</span>
+        <b></b>
+        <span data-progress="investigation"><i>3</i>Investigation</span>
+      </div>
+    </div>
     <div class="header-actions">
       <button id="newRunBtn" class="quiet-button hidden">New investigation</button>
       <a class="owner-link" href="https://github.com/chetan10510" target="_blank" rel="noopener noreferrer">Chetan Kumar</a>
@@ -27,24 +35,46 @@
   </header>
 
   <main>
-    <section id="startView" class="start-view">
+    <section id="welcomeView" class="welcome-view">
+      <img class="welcome-media" src="./assets/evidence-workspace-hero.png" alt="Public data sources converging into one verified company record">
+      <div class="welcome-shade" aria-hidden="true"></div>
+      <div class="welcome-content">
+        <p class="welcome-eyebrow"><span></span>Production AI + data engineering demo</p>
+        <h1>TraceForge AI</h1>
+        <p class="welcome-title">Company intelligence you can verify, not merely trust.</p>
+        <p class="welcome-copy">Trace a public company across independent sources, resolve conflicting facts, and inspect every citation behind the final record.</p>
+        <div class="welcome-actions">
+          <button id="beginBtn" class="primary-action">Begin investigation <span aria-hidden="true">→</span></button>
+          <button class="secondary-action" data-domain="stripe.com">Run Stripe demo</button>
+        </div>
+        <div class="welcome-proof" aria-label="Demo capabilities">
+          <span><b>4</b> live services</span>
+          <span><b>100%</b> citation target</span>
+          <span><b>0</b> invented claims</span>
+        </div>
+      </div>
+      <a class="welcome-scroll" href="#methodology">Explore the engineering <span aria-hidden="true">↓</span></a>
+    </section>
+
+    <section id="startView" class="start-view hidden">
       <div class="start-copy">
-        <p class="kicker"><span></span>Live connector and AI engineering demo</p>
-        <h1>Investigate a company.<br><em>Verify every claim.</em></h1>
-        <p class="lede">Enter any public company domain. TraceForge collects independent sources, resolves contradictions, and builds an evidence-backed company record you can challenge.</p>
+        <button id="welcomeBackBtn" class="back-link" type="button">← Back</button>
+        <p class="kicker"><span></span>Step 2 of 3 · Choose a target</p>
+        <h1>Which company should we investigate?</h1>
+        <p class="lede">Enter a public company domain. TraceForge will collect independent evidence, reconcile contradictions, and produce a claim ledger you can challenge.</p>
 
         <form id="domainForm" class="domain-form">
           <label for="domainInput">Company domain</label>
           <div class="domain-control">
             <span>https://</span>
             <input id="domainInput" name="domain" autocomplete="url" placeholder="stripe.com" required>
-            <button type="submit">Start investigation <b>→</b></button>
+            <button type="submit">Start live investigation <b>→</b></button>
           </div>
           <p id="domainError" class="input-error" role="alert"></p>
         </form>
 
         <div class="examples">
-          <span>Try an example</span>
+          <span>Or use a recruiter-ready example</span>
           <button data-domain="stripe.com">stripe.com</button>
           <button data-domain="notion.so">notion.so</button>
           <button data-domain="razorpay.com">razorpay.com</button>
