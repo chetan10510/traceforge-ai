@@ -203,7 +203,24 @@ async function runGithub(domain, env) {
       match_basis: "normalized organization name",
     }], started);
   } catch (error) {
-    return providerError("github", error, started);
+    try {
+      const publicUrl = `https://github.com/${encodeURIComponent(query)}`;
+      const response = await fetch(publicUrl, { headers: { Accept: "text/html", "User-Agent": "TraceForgeAI/1.0 portfolio-research" } });
+      if (!response.ok) throw error;
+      const html = await response.text();
+      const titleMatch = html.match(/<title>([^<]+)<\/title>/i);
+      return providerResult("github", [{
+        source_id: `github-public-${query.toLowerCase()}`,
+        source_type: "github_public_page",
+        title: titleMatch?.[1]?.replace(/\s*·\s*GitHub\s*$/, "").trim() || `${titleCase(query)} on GitHub`,
+        url: publicUrl,
+        content: `Public GitHub page matched from the normalized company domain slug: ${query}.`,
+        login: query,
+        match_basis: "normalized domain slug public-page fallback",
+      }], started);
+    } catch {
+      return providerError("github", error, started);
+    }
   }
 }
 
@@ -309,7 +326,7 @@ function fallbackClaims(domain, evidence) {
   }
   if (github) {
     if (github.attributes.location) claims.push({ field: "headquarters", value: github.attributes.location, confidence: 0.58, source_urls: [github.url], rationale: "Public GitHub organization location; requires confirmation" });
-    claims.push({ field: "signal", value: `Maintains ${github.attributes.public_repos || 0} public GitHub repositories`, confidence: 0.9, source_urls: [github.url], rationale: "GitHub organization metadata" });
+    if (github.attributes.public_repos != null) claims.push({ field: "signal", value: `Maintains ${github.attributes.public_repos} public GitHub repositories`, confidence: 0.9, source_urls: [github.url], rationale: "GitHub organization metadata" });
   }
   return claims;
 }
