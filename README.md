@@ -2,6 +2,8 @@
 
 TraceForge is a recruiter-testable AI and data engineering project. Give it a public company domain and it runs a typed multi-provider pipeline, retains raw evidence, resolves supported claims, exposes contradictions, and answers questions only from the active claim ledger.
 
+**Live demo:** [traceforge-ai.korivichetan5.chatgpt.site](https://traceforge-ai.korivichetan5.chatgpt.site)
+
 It is an investigation tool, not a static dashboard. Try a domain, inspect each connector, inject a conflict, challenge the evidence, and export the full run as JSON.
 
 ## What It Demonstrates
