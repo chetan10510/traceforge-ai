@@ -137,8 +137,8 @@ async function investigate(domain, env) {
 
 async function ensureDatabase(env) {
   if (!env.DB) throw new Error("D1 binding is not configured");
-  await env.DB.exec(`
-    CREATE TABLE IF NOT EXISTS public_companies (
+  await env.DB.batch([
+    env.DB.prepare(`CREATE TABLE IF NOT EXISTS public_companies (
       domain TEXT PRIMARY KEY,
       company_name TEXT NOT NULL,
       website TEXT,
@@ -153,10 +153,10 @@ async function ensureDatabase(env) {
       source_proof TEXT,
       source_url TEXT NOT NULL,
       loaded_at TEXT NOT NULL
-    );
-    CREATE INDEX IF NOT EXISTS idx_public_companies_industry ON public_companies(industry);
-    CREATE INDEX IF NOT EXISTS idx_public_companies_country ON public_companies(country);
-    CREATE TABLE IF NOT EXISTS investigation_runs (
+    )`),
+    env.DB.prepare("CREATE INDEX IF NOT EXISTS idx_public_companies_industry ON public_companies(industry)"),
+    env.DB.prepare("CREATE INDEX IF NOT EXISTS idx_public_companies_country ON public_companies(country)"),
+    env.DB.prepare(`CREATE TABLE IF NOT EXISTS investigation_runs (
       id TEXT PRIMARY KEY,
       domain TEXT NOT NULL,
       created_at TEXT NOT NULL,
@@ -168,9 +168,9 @@ async function ensureDatabase(env) {
       average_confidence INTEGER NOT NULL,
       corpus_status TEXT NOT NULL,
       summary_json TEXT NOT NULL
-    );
-    CREATE INDEX IF NOT EXISTS idx_investigation_runs_domain ON investigation_runs(domain);
-  `);
+    )`),
+    env.DB.prepare("CREATE INDEX IF NOT EXISTS idx_investigation_runs_domain ON investigation_runs(domain)"),
+  ]);
 }
 
 async function corpusStats(env) {
