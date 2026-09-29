@@ -12,7 +12,7 @@ It is an investigation tool, not a static dashboard. Try a domain, inspect each 
 - Gemini extraction constrained to collected URLs, with deterministic fallback
 - Conflict preservation rather than silent last-write-wins resolution
 - Background execution, progress events, six-hour cache, and atomic run persistence
-- A dependency-free Python API, responsive frontend, tests, health check, CI, and container build
+- A dependency-free Python API, responsive frontend, tests, health check, and container build
 
 ## Run Locally
 
