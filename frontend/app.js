@@ -301,7 +301,10 @@ async function injectConflict() {
   if (!state.run?.id) return;
   elements.conflictBtn.disabled = true;
   try {
-    state.run = await api(`/api/investigations/${encodeURIComponent(state.run.id)}/conflict`, { method: "POST", body: "{}" });
+    state.run = await api(`/api/investigations/${encodeURIComponent(state.run.id)}/conflict`, {
+      method: "POST",
+      body: JSON.stringify({ run: state.run }),
+    });
     render(state.run);
     toast("Test conflict retained in the canonical claim ledger.");
   } catch (error) {
@@ -321,7 +324,7 @@ async function askEvidence(event) {
   try {
     const response = await api(`/api/investigations/${encodeURIComponent(state.run.id)}/ask`, {
       method: "POST",
-      body: JSON.stringify({ question }),
+      body: JSON.stringify({ question, run: state.run }),
     });
     elements.answerQuestion.textContent = question;
     elements.answerText.textContent = response.answer;

@@ -13,6 +13,7 @@ It is an investigation tool, not a static dashboard. Try a domain, inspect each 
 - Conflict preservation rather than silent last-write-wins resolution
 - Background execution, progress events, six-hour cache, and atomic run persistence
 - A dependency-free Python API, responsive frontend, tests, health check, and container build
+- A Cloudflare Worker deployment adapter with encrypted server-side provider configuration
 
 ## Run Locally
 
@@ -45,6 +46,10 @@ On Linux or WSL, replace `py -3` with `python3`.
 | `GEMINI_MODEL` | Gemini model ID; defaults to `gemini-2.5-flash` | No |
 
 Secrets are server-side only and are excluded from exports and API responses.
+
+## Runtime Targets
+
+`backend/` provides the dependency-free Python development and container runtime. `worker/` provides the production serverless adapter used by the live portfolio deployment. Both expose the same browser-facing API contract and evidence rules.
 
 ## API
 
