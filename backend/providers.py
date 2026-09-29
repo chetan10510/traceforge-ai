@@ -55,7 +55,7 @@ def request_json(
     raise RuntimeError(str(last_error or "provider request failed"))
 
 
-def run_tavily(domain: str) -> ProviderResult:
+def run_tavily(domain: str, query_context: str = "engineering") -> ProviderResult:
     started = time.monotonic()
     key = os.getenv("TAVILY_API_KEY", "")
     if not key:
@@ -66,7 +66,7 @@ def run_tavily(domain: str) -> ProviderResult:
             method="POST",
             payload={
                 "api_key": key,
-                "query": f'"{domain}" company products engineering official',
+                "query": f'"{domain}" company {query_context} employees industry hiring technology official',
                 "search_depth": "basic",
                 "max_results": 6,
                 "include_answer": False,

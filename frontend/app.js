@@ -2,6 +2,8 @@ const state = {
   run: null,
   pollTimer: null,
   activePane: "evidence",
+  selectedDomain: "",
+  selectedPlaybook: "engineering_scale",
 };
 
 const $ = (selector) => document.querySelector(selector);
@@ -10,6 +12,8 @@ const $$ = (selector) => [...document.querySelectorAll(selector)];
 const elements = {
   welcomeView: $("#welcomeView"),
   startView: $("#startView"),
+  playbookView: $("#playbookView"),
+  playbookDomain: $("#playbookDomain"),
   workspaceView: $("#workspaceView"),
   domainForm: $("#domainForm"),
   domainInput: $("#domainInput"),
@@ -32,6 +36,12 @@ const elements = {
   companyName: $("#companyName"),
   companySummary: $("#companySummary"),
   profileFacts: $("#profileFacts"),
+  qualificationPlaybook: $("#qualificationPlaybook"),
+  fitScore: $("#fitScore"),
+  fitVerdict: $("#fitVerdict"),
+  fitMethod: $("#fitMethod"),
+  fitCoverage: $("#fitCoverage"),
+  criteriaList: $("#criteriaList"),
   corpusPanel: $("#corpusPanel"),
   corpusBody: $("#corpusBody"),
   warehouseBadge: $("#warehouseBadge"),
@@ -63,15 +73,24 @@ $(".brand").addEventListener("click", (event) => {
 
 elements.domainForm.addEventListener("submit", (event) => {
   event.preventDefault();
-  startInvestigation(elements.domainInput.value);
+  chooseDomain(elements.domainInput.value);
 });
 
 $$('[data-domain]').forEach((button) => {
   button.addEventListener("click", () => {
     elements.domainInput.value = button.dataset.domain;
-    startInvestigation(button.dataset.domain);
+    chooseDomain(button.dataset.domain);
   });
 });
+
+$$('[data-playbook]').forEach((button) => {
+  button.addEventListener("click", () => {
+    state.selectedPlaybook = button.dataset.playbook;
+    startInvestigation(state.selectedDomain, state.selectedPlaybook);
+  });
+});
+
+$("#targetBackBtn").addEventListener("click", showTargetStep);
 
 elements.newRunBtn.addEventListener("click", resetWorkspace);
 elements.exportBtn.addEventListener("click", exportEvidence);
@@ -83,20 +102,33 @@ $$('[data-pane]').forEach((button) => {
   button.addEventListener("click", () => switchPane(button.dataset.pane));
 });
 
-async function startInvestigation(rawDomain) {
+function chooseDomain(rawDomain) {
   const domain = normalizeDomain(rawDomain);
   elements.domainError.textContent = "";
   if (!domain) {
     elements.domainError.textContent = "Enter a valid public company domain, such as stripe.com.";
     return;
   }
+  state.selectedDomain = domain;
+  elements.playbookDomain.textContent = domain;
+  elements.welcomeView.classList.add("hidden");
+  elements.startView.classList.add("hidden");
+  elements.workspaceView.classList.add("hidden");
+  elements.playbookView.classList.remove("hidden");
+  setProgress("playbook");
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+async function startInvestigation(rawDomain, playbook = "engineering_scale") {
+  const domain = normalizeDomain(rawDomain);
+  if (!domain) return showStartError("Enter a valid public company domain, such as stripe.com.");
 
   clearTimeout(state.pollTimer);
   showWorkspace(domain);
   try {
     const run = await api("/api/investigations", {
       method: "POST",
-      body: JSON.stringify({ domain }),
+      body: JSON.stringify({ domain, playbook }),
     });
     state.run = run;
     render(run);
@@ -127,6 +159,7 @@ function schedulePoll() {
 function showWorkspace(domain) {
   elements.welcomeView.classList.add("hidden");
   elements.startView.classList.add("hidden");
+  elements.playbookView.classList.add("hidden");
   elements.workspaceView.classList.remove("hidden");
   elements.newRunBtn.classList.remove("hidden");
   elements.runningState.classList.remove("hidden");
@@ -145,6 +178,7 @@ function resetWorkspace() {
   clearTimeout(state.pollTimer);
   state.run = null;
   elements.welcomeView.classList.add("hidden");
+  elements.playbookView.classList.add("hidden");
   elements.workspaceView.classList.add("hidden");
   elements.startView.classList.remove("hidden");
   elements.newRunBtn.classList.add("hidden");
@@ -158,6 +192,7 @@ function resetWorkspace() {
 function showTargetStep() {
   elements.welcomeView.classList.add("hidden");
   elements.workspaceView.classList.add("hidden");
+  elements.playbookView.classList.add("hidden");
   elements.startView.classList.remove("hidden");
   elements.newRunBtn.classList.add("hidden");
   setProgress("target");
@@ -169,6 +204,7 @@ function showWelcome() {
   clearTimeout(state.pollTimer);
   state.run = null;
   elements.startView.classList.add("hidden");
+  elements.playbookView.classList.add("hidden");
   elements.workspaceView.classList.add("hidden");
   elements.welcomeView.classList.remove("hidden");
   elements.newRunBtn.classList.add("hidden");
@@ -178,7 +214,7 @@ function showWelcome() {
 }
 
 function setProgress(activeStep) {
-  const steps = ["welcome", "target", "investigation"];
+  const steps = ["welcome", "target", "playbook", "investigation"];
   const activeIndex = steps.indexOf(activeStep);
   $$('[data-progress]').forEach((item) => {
     const index = steps.indexOf(item.dataset.progress);
@@ -192,7 +228,7 @@ function render(run) {
   elements.targetMonogram.textContent = (run.domain || "?").charAt(0).toUpperCase();
   elements.progressLabel.textContent = `${run.progress || 0}%`;
   elements.progressBar.style.width = `${run.progress || 0}%`;
-  elements.runMeta.textContent = `${run.cached ? "Cache replay" : "Live run"} · ${shortId(run.id)} · ${formatTime(run.created_at)}`;
+  elements.runMeta.textContent = `${run.playbook?.name || "ICP qualification"} · ${run.cached ? "Cache replay" : "Live run"} · ${shortId(run.id)} · ${formatTime(run.created_at)}`;
   renderStatus(run);
   renderStages(run.stages || []);
   renderProviders(run.providers || []);
@@ -277,6 +313,7 @@ function renderResults(run) {
     .filter(Boolean);
   elements.profileFacts.innerHTML = facts.map((item) => `<span><b>${escapeHtml(titleCase(item.field))}</b> · ${escapeHtml(displayValue(item.value))}</span>`).join("")
     + `<span><b>AI extraction</b> · ${escapeHtml(titleCase(run.model?.status || "not configured"))}</span>`;
+  renderQualification(run.qualification, run.playbook);
   renderCorpus(run.corpus, run.warehouse);
 
   const quality = run.quality || {};
@@ -284,6 +321,32 @@ function renderResults(run) {
   elements.confidenceMetric.textContent = `${quality.average_confidence || 0}%`;
   elements.conflictMetric.textContent = quality.conflicts || 0;
   renderClaims(claims);
+}
+
+function renderQualification(qualification = {}, playbook = {}) {
+  elements.qualificationPlaybook.textContent = playbook.name || qualification.playbook_name || "ICP qualification";
+  elements.fitScore.textContent = qualification.score ?? 0;
+  elements.fitVerdict.textContent = qualification.verdict || "Review";
+  elements.fitVerdict.className = `fit-verdict ${escapeClass((qualification.verdict || "review").toLowerCase().replaceAll(" ", "-"))}`;
+  elements.fitMethod.textContent = qualification.methodology || "Deterministic rules over collected evidence.";
+  elements.fitCoverage.textContent = `${qualification.coverage || 0}% evidence coverage`;
+  const criteria = qualification.criteria || [];
+  elements.criteriaList.innerHTML = criteria.length ? criteria.map((item) => {
+    const sources = (item.source_urls || []).filter(isSafeHttpUrl);
+    const links = sources.map((url, index) => `<a href="${escapeAttribute(url)}" target="_blank" rel="noopener noreferrer" title="Open criterion source">${index + 1}</a>`).join("");
+    return `<article class="criterion-row">
+      <span class="criterion-state ${escapeClass(item.status)}">${criterionMarker(item.status)}</span>
+      <div><strong>${escapeHtml(item.label)}</strong><p>${escapeHtml(item.reason)}</p></div>
+      <span class="criterion-weight">${item.score}/${item.weight}</span>
+      <div class="criterion-links">${links || "—"}</div>
+    </article>`;
+  }).join("") : '<p class="empty-result">No qualification criteria were returned.</p>';
+}
+
+function criterionMarker(status) {
+  if (status === "met") return "✓";
+  if (status === "not_met") return "×";
+  return "?";
 }
 
 function renderCorpus(corpus = {}, warehouse = {}) {
@@ -522,7 +585,7 @@ const urlParams = new URLSearchParams(window.location.search);
 const linkedDomain = urlParams.get("domain");
 if (linkedDomain) {
   elements.domainInput.value = linkedDomain;
-  startInvestigation(linkedDomain);
+  chooseDomain(linkedDomain);
 } else if (urlParams.get("step") === "target") {
   showTargetStep();
 }

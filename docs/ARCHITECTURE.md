@@ -11,6 +11,7 @@ Browser
         -> GitHub connector -------+
         -> D1 corpus lookup ---------> company match + peer cohort
                                       -> constrained claim extraction
+                                      -> deterministic ICP qualification
                                       -> deterministic conflict resolver
                                       -> quality metrics and claim ledger
                                       -> D1 run summary
@@ -34,6 +35,8 @@ Every connector returns the same envelope:
 
 An HTTP response is not counted as populated success unless usable records were returned. Provider records are converted into evidence without overwriting one another. Claims reference exact evidence URLs and are rejected when their field is unsupported or their citation is absent.
 
+ICP qualification consumes the public corpus record, supported claims, and immutable evidence. Geography and company-size checks are hard gates when known. Unknown values remain `unverified` and receive no score; they are never inferred by the model.
+
 ## Reliability Behavior
 
 - Connectors execute concurrently, so one slow provider does not serialize the run.
@@ -50,6 +53,7 @@ An HTTP response is not counted as populated success unless usable records were 
 - API keys are loaded into the server process and never returned to the browser.
 - The domain validator rejects local, internal, malformed, and placeholder targets.
 - AI-generated citations are intersected with the URLs collected in the active run.
+- Playbook rules and weights are server-side constants, separate from model prompts and responses.
 - Browser output is escaped before insertion, and outbound links allow only HTTP(S).
 - The exported evidence package contains run data, not environment configuration.
 - The public corpus builder uses a field allowlist; contact data and client-only scoring never enter the deploy artifact.

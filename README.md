@@ -1,23 +1,24 @@
 # TraceForge AI
 
-TraceForge is a recruiter-testable AI and data engineering project. Give it a public company domain and it runs a typed multi-provider pipeline, retains raw evidence, joins the target to a normalized public-company corpus, resolves supported claims, exposes contradictions, and answers questions only from the active claim ledger.
+TraceForge is a recruiter-testable AI and data engineering project. Give it a public company domain, choose an ICP playbook, and it runs a typed multi-provider pipeline that qualifies the account with explicit rules, retains raw evidence, joins a normalized public-company corpus, resolves supported claims, and answers questions only from the active claim ledger.
 
 **Live demo:** [traceforge-ai.korivichetan5.chatgpt.site](https://traceforge-ai.korivichetan5.chatgpt.site)
 
-It is an investigation tool, not a static dashboard. Try a domain, inspect each connector, inject a conflict, challenge the evidence, and export the full run as JSON.
+It is an investigation and qualification tool, not a static dashboard. Try a domain, select a market playbook, inspect every criterion and connector, challenge the evidence, and export the full run as JSON.
 
 ## 90-Second Recruiter Test
 
-1. Open the live demo and investigate `stripe.com`, `resend.com`, or a company you know.
-2. Try `resend.com` or `infisical.com` to inspect the D1 corpus match, provenance, and peer cohort.
-3. Inspect connector latency and distinguish populated success from provider error or no-match.
-4. Open claim citations, then inject a conflict and watch the quality metrics change.
-5. Ask a question the evidence can answer, followed by one it cannot, then export the evidence package.
+1. Enter `resend.com`, `infisical.com`, or a company you know.
+2. Choose Engineering Scale, Regulated AI & Security, Customer Support Scale, or Growth Market Segments.
+3. Inspect the fit score: each criterion is `met`, `not_met`, or `unverified` with evidence links.
+4. Compare deterministic qualification with the AI claim ledger, then inject a test conflict.
+5. Ask the evidence a supported and unsupported question, then export the complete decision package.
 
 ## What It Demonstrates
 
 - Parallel data ingestion from Firecrawl, Tavily, and GitHub
 - A uniform provider contract with `success`, `no_match`, `error`, and `not_configured` states
+- Four deterministic ICP playbooks with weighted hard gates, evidence coverage, and visible unknowns
 - Evidence lineage from raw provider records to canonical claims
 - Gemini extraction constrained to collected URLs, with deterministic fallback
 - Conflict preservation rather than silent last-write-wins resolution
@@ -92,6 +93,7 @@ POST /api/investigations/{run_id}/ask
 ```
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for contracts, trust boundaries, and failure behavior.
+See [docs/ICP_PLAYBOOKS.md](docs/ICP_PLAYBOOKS.md) for the public qualification rules and decision contract.
 
 ## Responsible Use
 

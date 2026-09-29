@@ -23,7 +23,9 @@
         <b></b>
         <span data-progress="target"><i>2</i>Target</span>
         <b></b>
-        <span data-progress="investigation"><i>3</i>Investigation</span>
+        <span data-progress="playbook"><i>3</i>ICP</span>
+        <b></b>
+        <span data-progress="investigation"><i>4</i>Investigation</span>
       </div>
     </div>
     <div class="header-actions">
@@ -46,7 +48,7 @@
         <p class="welcome-copy">Trace a public company across independent sources, resolve conflicting facts, and inspect every citation behind the final record.</p>
         <div class="welcome-actions">
           <button id="beginBtn" class="primary-action">Begin investigation <span aria-hidden="true">→</span></button>
-          <button class="secondary-action" data-domain="stripe.com">Run Stripe demo</button>
+          <button class="secondary-action" data-domain="stripe.com">Try Stripe</button>
         </div>
         <div class="welcome-proof" aria-label="Demo capabilities">
           <span><b>3</b> typed source adapters</span>
@@ -62,7 +64,7 @@
     <section id="startView" class="start-view hidden">
       <div class="start-copy">
         <button id="welcomeBackBtn" class="back-link" type="button">← Back</button>
-        <p class="kicker"><span></span>Step 2 of 3 · Choose a target</p>
+        <p class="kicker"><span></span>Step 2 of 4 · Choose a target</p>
         <h1>Which company should we investigate?</h1>
         <p class="lede">Enter a public company domain. TraceForge will collect independent evidence, reconcile contradictions, and produce a claim ledger you can challenge.</p>
 
@@ -71,7 +73,7 @@
           <div class="domain-control">
             <span>https://</span>
             <input id="domainInput" name="domain" autocomplete="url" placeholder="stripe.com" required>
-            <button type="submit">Start live investigation <b>→</b></button>
+            <button type="submit">Choose ICP <b>→</b></button>
           </div>
           <p id="domainError" class="input-error" role="alert"></p>
         </form>
@@ -97,6 +99,21 @@
           <p><span>✓</span> No-match is not treated as failure</p>
           <p><span>✓</span> Unsupported AI claims are rejected</p>
         </div>
+      </div>
+    </section>
+
+    <section id="playbookView" class="playbook-view hidden">
+      <div class="playbook-copy">
+        <button id="targetBackBtn" class="back-link" type="button">← Back to target</button>
+        <p class="kicker"><span></span>Step 3 of 4 · Select an ICP</p>
+        <h1>What should <em id="playbookDomain">this company</em> qualify for?</h1>
+        <p class="lede">Choose one production-style account playbook. Every criterion will return pass, fail, or unverified with source-linked evidence.</p>
+      </div>
+      <div id="playbookOptions" class="playbook-options">
+        <button type="button" data-playbook="regulated_ai"><span>01</span><strong>Regulated AI &amp; Security</strong><small>Regulated industries · 50–2,000 employees · AI, security, compliance</small><i>→</i></button>
+        <button type="button" data-playbook="support_scale"><span>02</span><strong>Customer Support Scale</strong><small>Digital industries · 50–500 employees · support growth and hiring</small><i>→</i></button>
+        <button type="button" data-playbook="engineering_scale"><span>03</span><strong>Engineering Scale</strong><small>B2B technology · 30–300 employees · stack, GitHub, hiring, remote</small><i>→</i></button>
+        <button type="button" data-playbook="growth_markets"><span>04</span><strong>Growth Market Segments</strong><small>Tech/SaaS · manufacturing/construction · services/logistics</small><i>→</i></button>
       </div>
     </section>
 
@@ -136,6 +153,15 @@
           </div>
 
           <div id="resultsState" class="results-state hidden">
+            <section class="qualification-band">
+              <div class="qualification-head">
+                <div><p class="section-kicker">Deterministic ICP decision</p><h2 id="qualificationPlaybook">ICP qualification</h2></div>
+                <div class="fit-score"><strong id="fitScore">0</strong><span>/100</span></div>
+              </div>
+              <div class="qualification-summary"><span id="fitVerdict" class="fit-verdict">Review</span><p id="fitMethod"></p><b id="fitCoverage">0% evidence coverage</b></div>
+              <div id="criteriaList" class="criteria-list"></div>
+            </section>
+
             <section class="briefing-band">
               <p class="section-kicker">Resolved identity</p>
               <h2 id="companyName">Company profile</h2>
@@ -179,7 +205,7 @@
 
     <section id="methodology" class="methodology">
       <div><p class="section-kicker">Engineering method</p><h2>Designed like a data product, not a chatbot.</h2></div>
-      <div class="method-grid"><p><b>Typed connectors</b><span>Every source reports health, latency, status, records, and errors through one contract.</span></p><p><b>Cloud corpus</b><span>Public company records are allowlisted, normalized by domain, and served from D1 with source lineage.</span></p><p><b>Constrained AI</b><span>The model may cite only URLs gathered during the active run.</span></p><p><b>Honest quality</b><span>Success, no-match, provider error, conflicts, and fallback behavior remain visible.</span></p></div>
+      <div class="method-grid"><p><b>Explicit ICP rules</b><span>Weighted geography, company-size, industry, and operating-signal checks remain separate from model output.</span></p><p><b>Cloud corpus</b><span>Public company records are allowlisted, normalized by domain, and served from D1 with source lineage.</span></p><p><b>Constrained AI</b><span>The model may cite only URLs gathered during the active run.</span></p><p><b>Honest quality</b><span>Pass, fail, unverified, no-match, provider error, and conflicts remain visible.</span></p></div>
     </section>
 
     <footer class="project-footer">

@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any
 
 from .providers import ProviderResult, request_json, run_firecrawl, run_github, run_tavily
+from .qualification import PLAYBOOKS, normalize_playbook, public_playbook, qualify_company
 from .resolver import build_evidence, extract_claims, inject_conflict, urllib_quote
 
 
@@ -45,9 +46,11 @@ def normalize_domain(raw: str) -> str:
     return value
 
 
-def create_investigation(raw_domain: str) -> dict[str, Any]:
+def create_investigation(raw_domain: str, raw_playbook: str = "engineering_scale") -> dict[str, Any]:
     domain = normalize_domain(raw_domain)
-    cached = CACHE.get(domain)
+    playbook_id = normalize_playbook(raw_playbook)
+    cache_key = f"{domain}:{playbook_id}"
+    cached = CACHE.get(cache_key)
     if cached and time.time() - cached[0] < CACHE_TTL_SECONDS:
         cloned = json.loads(json.dumps(cached[1]))
         run_id = uuid.uuid4().hex[:12]
@@ -60,6 +63,7 @@ def create_investigation(raw_domain: str) -> dict[str, Any]:
     run = {
         "id": run_id,
         "domain": domain,
+        "playbook": public_playbook(playbook_id),
         "status": "queued",
         "progress": 2,
         "current_stage": "validate",
@@ -150,15 +154,19 @@ def _execute(run_id: str) -> None:
 
         _start_stage(run_id, "discover", 18)
         domain = RUNS[run_id]["domain"]
-        _add_event(run_id, "source_plan", "Planned Firecrawl, Tavily, and GitHub connectors", "info")
+        playbook_id = RUNS[run_id]["playbook"]["id"]
+        _add_event(run_id, "source_plan", f"Planned Firecrawl, Tavily, and GitHub connectors for {PLAYBOOKS[playbook_id]['name']}", "info")
         time.sleep(0.2)
         _finish_stage(run_id, "discover", 27, "Three public provider adapters scheduled")
 
         _start_stage(run_id, "collect", 32)
-        provider_functions = [run_firecrawl, run_tavily, run_github]
         results: list[ProviderResult] = []
         with ThreadPoolExecutor(max_workers=3) as executor:
-            futures = {executor.submit(function, domain): function.__name__ for function in provider_functions}
+            futures = {
+                executor.submit(run_firecrawl, domain): "run_firecrawl",
+                executor.submit(run_tavily, domain, PLAYBOOKS[playbook_id]["name"]): "run_tavily",
+                executor.submit(run_github, domain): "run_github",
+            }
             for future in as_completed(futures):
                 result = future.result()
                 results.append(result)
@@ -168,10 +176,12 @@ def _execute(run_id: str) -> None:
         _start_stage(run_id, "resolve", 68)
         evidence = build_evidence(results)
         claims, model = extract_claims(domain, results)
+        qualification = qualify_company(playbook_id, claims, evidence)
         with RUNS_LOCK:
             RUNS[run_id]["evidence"] = evidence
             RUNS[run_id]["claims"] = claims
             RUNS[run_id]["model"] = model
+            RUNS[run_id]["qualification"] = qualification
         _finish_stage(run_id, "resolve", 87, f"Resolved {len(claims)} canonical claims")
 
         _start_stage(run_id, "brief", 91)
@@ -185,7 +195,7 @@ def _execute(run_id: str) -> None:
         _finish_stage(run_id, "brief", 100, f"Evidence coverage {quality['citation_coverage']}%")
         with RUNS_LOCK:
             completed = json.loads(json.dumps(RUNS[run_id]))
-        CACHE[domain] = (time.time(), completed)
+        CACHE[f"{domain}:{playbook_id}"] = (time.time(), completed)
         _persist(completed)
     except Exception as error:
         with RUNS_LOCK:

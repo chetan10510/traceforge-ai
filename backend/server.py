@@ -53,7 +53,7 @@ class TraceForgeHandler(SimpleHTTPRequestHandler):
         try:
             body = self._body()
             if path == "/api/investigations":
-                self._json(create_investigation(str(body.get("domain") or "")), 202)
+                self._json(create_investigation(str(body.get("domain") or ""), str(body.get("playbook") or "engineering_scale")), 202)
                 return
             if path.endswith("/conflict") and path.startswith("/api/investigations/"):
                 run_id = path.split("/")[3]

@@ -2,6 +2,32 @@ const RUNS = new Map();
 const CLAIM_FIELDS = new Set([
   "company_name", "summary", "industry", "headquarters", "founded_year", "product", "technology", "signal",
 ]);
+const PLAYBOOKS = {
+  regulated_ai: {
+    id: "regulated_ai", name: "Regulated AI & Security", source: "Generalized production ICP pattern",
+    geography: ["united states", "usa", "canada", "north america"], size: [50, 2000],
+    industries: ["healthcare", "health care", "financial", "bank", "insurance", "legal", "government", "public sector", "compliance"],
+    signals: ["artificial intelligence", " ai ", "machine learning", "security", "compliance", "privacy", "governance", "risk"],
+  },
+  support_scale: {
+    id: "support_scale", name: "Customer Support Scale", source: "Generalized production ICP pattern",
+    geography: ["united states", "usa"], size: [50, 500],
+    industries: ["saas", "software", "fintech", "healthtech", "healthcare", "logistics", "e-commerce", "ecommerce"],
+    signals: ["customer support", "customer success", "support role", "hiring", "careers", "funding", "growth", "offshore"],
+  },
+  engineering_scale: {
+    id: "engineering_scale", name: "Engineering Scale", source: "Generalized production ICP pattern",
+    geography: ["united states", "usa"], size: [30, 300],
+    industries: ["saas", "software", "developer", "fintech", "b2b", "digital product", "technology"],
+    signals: ["engineering", "developer", "github", "python", "javascript", "java", "aws", "devops", "remote", "hiring", "scaling"],
+  },
+  growth_markets: {
+    id: "growth_markets", name: "Growth Market Segments", source: "Generalized production ICP pattern",
+    geography: [], size: [10, 1000],
+    industries: ["saas", "software", "technology", "manufacturing", "construction", "industrial", "services", "logistics", "advisory"],
+    signals: ["growth", "funding", "hiring", "expansion", "platform", "digital", "automation"],
+  },
+};
 
 const STAGES = [
   ["validate", "Validate target", "Confirm a safe public company domain"],
@@ -34,7 +60,7 @@ export default {
 
       if (url.pathname === "/api/investigations" && request.method === "POST") {
         const body = await readJson(request);
-        const run = await investigate(normalizeDomain(body.domain), env);
+        const run = await investigate(normalizeDomain(body.domain), normalizePlaybook(body.playbook), env);
         RUNS.set(run.id, run);
         return json(run, 201);
       }
@@ -74,20 +100,20 @@ export default {
   },
 };
 
-async function investigate(domain, env) {
+async function investigate(domain, playbookId, env) {
   const id = crypto.randomUUID().replaceAll("-", "").slice(0, 12);
   const createdAt = new Date().toISOString();
   const started = Date.now();
   const events = [
     event("validate", "Target passed domain and network safety checks", "success"),
-    event("source_plan", "Planned Firecrawl, Tavily, and GitHub connectors", "info"),
+    event("source_plan", `Planned Firecrawl, Tavily, and GitHub connectors for ${PLAYBOOKS[playbookId].name}`, "info"),
     event("discover", "Three public provider adapters scheduled", "success"),
   ];
   const collectStarted = Date.now();
   const [providers, corpus] = await Promise.all([
     Promise.all([
       runFirecrawl(domain, env),
-      runTavily(domain, env),
+      runTavily(domain, playbookId, env),
       runGithub(domain, env),
     ]),
     lookupCorpus(domain, env),
@@ -100,6 +126,8 @@ async function investigate(domain, env) {
   const resolveStarted = Date.now();
   const extraction = await extractClaims(domain, evidence, env);
   events.push(event("resolve", `Resolved ${extraction.claims.length} canonical claims`, "success"));
+  const qualification = qualifyCompany(playbookId, extraction.claims, evidence, corpus);
+  events.push(event("qualify", `${qualification.verdict} · ${qualification.score}/100 ICP score · ${qualification.coverage}% evidence coverage`, qualification.verdict === "Review" ? "warning" : "success"));
   const quality = qualitySummary(extraction.claims, evidence);
   events.push(event("brief", `Evidence coverage ${quality.citation_coverage}%`, "success"));
   events.push(event("corpus", corpus.status === "matched" ? `Matched ${domain} in the public company corpus` : corpus.message, corpus.status === "unavailable" ? "warning" : "info"));
@@ -108,6 +136,7 @@ async function investigate(domain, env) {
   const run = {
     id,
     domain,
+    playbook: publicPlaybook(playbookId),
     status: "complete",
     progress: 100,
     current_stage: "brief",
@@ -127,6 +156,7 @@ async function investigate(domain, env) {
     model: extraction.model,
     quality,
     corpus,
+    qualification,
     events,
     error: null,
   };
@@ -248,6 +278,8 @@ async function persistRun(run, env) {
     const summary = {
       model: run.model,
       quality: run.quality,
+      playbook: run.playbook,
+      qualification: run.qualification,
       providers: run.providers,
       claims: run.claims.map(({ field, value, confidence, status, source_urls }) => ({ field, value, confidence, status, source_urls })),
     };
@@ -261,6 +293,99 @@ async function persistRun(run, env) {
   } catch (error) {
     return { persisted: false, message: cleanError(error) };
   }
+}
+
+function qualifyCompany(playbookId, claims, evidence, corpus) {
+  const playbook = PLAYBOOKS[playbookId];
+  const record = corpus.record || {};
+  const claimText = claims.map((claim) => `${claim.field} ${displayText(claim.value)} ${claim.rationale || ""}`).join(" ").toLowerCase();
+  const evidenceText = evidence.map((item) => `${item.title || ""} ${item.content || ""}`).join(" ").toLowerCase();
+  const corpusText = [record.company_name, record.country, record.industry, record.subindustry, record.one_liner, record.funding_stage].filter(Boolean).join(" ").toLowerCase();
+  const allText = ` ${corpusText} ${claimText} ${evidenceText} `;
+  const criteria = [];
+
+  if (playbook.geography.length) {
+    const geographySources = matchingSources(playbook.geography, claims, evidence, record);
+    const known = Boolean(record.country || claims.some((claim) => claim.field === "headquarters"));
+    const matched = containsAny(allText, playbook.geography);
+    criteria.push(criterion("geography", "Target geography", 20, known ? (matched ? "met" : "not_met") : "unverified",
+      matched ? `Matched target geography: ${record.country || claimValue(claims, "headquarters")}` : known ? `Known geography is outside this playbook: ${record.country || claimValue(claims, "headquarters")}` : "No defensible geography evidence collected",
+      geographySources, true));
+  }
+
+  const employeeCount = Number(record.employee_count || 0);
+  const sizeMatched = employeeCount >= playbook.size[0] && employeeCount <= playbook.size[1];
+  criteria.push(criterion("company_size", "Company size", 20, employeeCount ? (sizeMatched ? "met" : "not_met") : "unverified",
+    employeeCount ? `${employeeCount} employees at source snapshot; target is ${playbook.size[0]}-${playbook.size[1]}` : `Employee count unavailable; target is ${playbook.size[0]}-${playbook.size[1]}`,
+    record.source_url ? [record.source_url] : [], true));
+
+  const industrySources = matchingSources(playbook.industries, claims, evidence, record);
+  const industryMatched = containsAny(allText, playbook.industries);
+  criteria.push(criterion("industry", "Industry fit", playbook.geography.length ? 30 : 45, industryMatched ? "met" : "unverified",
+    industryMatched ? `Matched playbook industry evidence${record.industry ? `: ${record.industry}` : ""}` : "No target-industry phrase was supported by collected evidence",
+    industrySources, false));
+
+  const signalSources = matchingSources(playbook.signals, claims, evidence, record);
+  const signalMatched = containsAny(allText, playbook.signals);
+  criteria.push(criterion("buying_signals", "Buying and operating signals", playbook.geography.length ? 30 : 35, signalMatched ? "met" : "unverified",
+    signalMatched ? "At least one playbook signal appears in collected public evidence" : "No qualifying growth, hiring, technology, or operating signal was confirmed",
+    signalSources, false));
+
+  const totalWeight = criteria.reduce((sum, item) => sum + item.weight, 0);
+  const score = Math.round(criteria.reduce((sum, item) => sum + item.score, 0) / totalWeight * 100);
+  const verifiedWeight = criteria.filter((item) => item.status !== "unverified").reduce((sum, item) => sum + item.weight, 0);
+  const coverage = Math.round(verifiedWeight / totalWeight * 100);
+  const hardFailure = criteria.some((item) => item.hard_gate && item.status === "not_met");
+  const verdict = hardFailure ? "Exclude" : score >= 75 && coverage >= 70 ? "Strong Fit" : score >= 50 ? "Likely Fit" : "Review";
+  return {
+    playbook_id: playbook.id,
+    playbook_name: playbook.name,
+    verdict,
+    score,
+    coverage,
+    criteria,
+    methodology: "Deterministic weighted rules over source-linked company evidence; unknown values remain unverified",
+  };
+}
+
+function criterion(id, label, weight, status, reason, sourceUrls, hardGate) {
+  return {
+    id, label, weight, status, reason, hard_gate: hardGate,
+    score: status === "met" ? weight : 0,
+    source_urls: [...new Set(sourceUrls.filter((url) => /^https?:\/\//.test(url)))].slice(0, 4),
+  };
+}
+
+function matchingSources(terms, claims, evidence, record) {
+  const urls = [];
+  const corpusText = [record.country, record.industry, record.subindustry, record.one_liner].filter(Boolean).join(" ").toLowerCase();
+  if (record.source_url && containsAny(` ${corpusText} `, terms)) urls.push(record.source_url);
+  for (const claim of claims) {
+    if (containsAny(` ${displayText(claim.value)} ${claim.rationale || ""} `.toLowerCase(), terms)) urls.push(...(claim.source_urls || []));
+  }
+  for (const item of evidence) {
+    if (containsAny(` ${item.title || ""} ${item.content || ""} `.toLowerCase(), terms)) urls.push(item.url);
+  }
+  return urls;
+}
+
+function containsAny(text, terms) {
+  return terms.some((term) => text.includes(term));
+}
+
+function claimValue(claims, field) {
+  return displayText(claims.find((claim) => claim.field === field)?.value || "");
+}
+
+function displayText(value) {
+  if (Array.isArray(value)) return value.join(" ");
+  if (value && typeof value === "object") return JSON.stringify(value);
+  return String(value || "");
+}
+
+function publicPlaybook(playbookId) {
+  const playbook = PLAYBOOKS[playbookId];
+  return { id: playbook.id, name: playbook.name, source: playbook.source };
 }
 
 async function runFirecrawl(domain, env) {
@@ -291,7 +416,7 @@ async function runFirecrawl(domain, env) {
   }
 }
 
-async function runTavily(domain, env) {
+async function runTavily(domain, playbookId, env) {
   const started = Date.now();
   if (!env.TAVILY_API_KEY) return missingProvider("tavily", started);
   try {
@@ -299,7 +424,7 @@ async function runTavily(domain, env) {
       method: "POST",
       body: {
         api_key: env.TAVILY_API_KEY,
-        query: `"${domain}" company products engineering official`,
+        query: `"${domain}" company ${PLAYBOOKS[playbookId].name} employees industry hiring technology official`,
         search_depth: "basic",
         max_results: 6,
         include_answer: false,
@@ -627,6 +752,12 @@ function normalizeDomain(raw) {
   const value = String(raw || "").trim().toLowerCase().replace(/^https?:\/\//, "").split(/[/?#]/)[0].replace(/^www\./, "").replace(/^\.+|\.+$/g, "");
   if (!/^[a-z0-9](?:[a-z0-9-]{0,62}\.)+[a-z]{2,24}$/.test(value)) throw new UserError("Enter a public company domain, for example stripe.com");
   if (value.endsWith(".local") || value.endsWith(".internal") || ["localhost", "example.com"].includes(value)) throw new UserError("Private, local, and placeholder domains are not supported");
+  return value;
+}
+
+function normalizePlaybook(raw) {
+  const value = String(raw || "engineering_scale").trim().toLowerCase();
+  if (!PLAYBOOKS[value]) throw new UserError("Choose a supported ICP playbook");
   return value;
 }
 

@@ -4,6 +4,7 @@ from unittest.mock import patch
 
 from backend.engine import _deterministic_answer, normalize_domain, public_run, quality_summary
 from backend.providers import ProviderResult
+from backend.qualification import normalize_playbook, qualify_company
 from backend.resolver import build_evidence, extract_claims, inject_conflict, resolve_claims
 
 
@@ -99,6 +100,20 @@ class QualityAndAnswerTests(unittest.TestCase):
         answer = _deterministic_answer(run, "What product does it offer?")
         self.assertEqual(answer["citations"], ["https://one.test"])
         self.assertTrue(answer["grounded"])
+
+
+class QualificationTests(unittest.TestCase):
+    def test_rejects_unknown_playbook(self):
+        with self.assertRaises(ValueError):
+            normalize_playbook("client_secret_segment")
+
+    def test_scores_only_supported_criteria(self):
+        evidence = [{"title": "Developer platform", "content": "Software engineering teams use Python and AWS.", "url": "https://one.test"}]
+        result = qualify_company("engineering_scale", [], evidence)
+        self.assertEqual(result["verdict"], "Likely Fit")
+        self.assertEqual(result["score"], 60)
+        self.assertEqual({item["status"] for item in result["criteria"]}, {"met", "unverified"})
+        self.assertEqual(result["criteria"][-1]["source_urls"], ["https://one.test"])
 
 
 if __name__ == "__main__":
