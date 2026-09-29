@@ -5,13 +5,15 @@
 ```text
 Browser
   -> Investigation API
-     -> background orchestrator
+     -> orchestration layer
         -> Firecrawl connector ----+
         -> Tavily connector -------+--> immutable evidence records
         -> GitHub connector -------+
+        -> D1 corpus lookup ---------> company match + peer cohort
                                       -> constrained claim extraction
                                       -> deterministic conflict resolver
                                       -> quality metrics and claim ledger
+                                      -> D1 run summary
   <- polling state, events, evidence, claims, and model status
 ```
 
@@ -40,6 +42,8 @@ An HTTP response is not counted as populated success unless usable records were 
 - A deterministic extractor and answer path remain available when Gemini is unavailable.
 - Completed runs are cached by normalized domain for six hours.
 - Run files use temporary-file replacement so readers do not observe partial JSON.
+- The hosted Worker persists compact run summaries in D1 and degrades visibly if storage is unavailable.
+- Corpus initialization is idempotent and uses domain primary keys plus batched inserts.
 
 ## Trust Boundaries
 
@@ -48,7 +52,8 @@ An HTTP response is not counted as populated success unless usable records were 
 - AI-generated citations are intersected with the URLs collected in the active run.
 - Browser output is escaped before insertion, and outbound links allow only HTTP(S).
 - The exported evidence package contains run data, not environment configuration.
+- The public corpus builder uses a field allowlist; contact data and client-only scoring never enter the deploy artifact.
 
 ## Scaling Path
 
-The local implementation keeps run state in process so the portfolio demo has no paid infrastructure dependency. A production deployment would replace the thread with a queue worker, the in-memory map with Redis, JSON persistence with object storage or Postgres, and local rate behavior with shared provider budgets. The provider and claim contracts can remain unchanged.
+The local implementation keeps active run state in process. The hosted deployment uses D1 for the normalized public-company serving layer and compact run summaries. At higher volume, active orchestration would move to a queue, hot state to Redis, and complete immutable evidence packages to object storage. The provider, corpus, and claim contracts can remain unchanged.

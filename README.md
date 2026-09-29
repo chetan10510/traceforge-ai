@@ -1,6 +1,6 @@
 # TraceForge AI
 
-TraceForge is a recruiter-testable AI and data engineering project. Give it a public company domain and it runs a typed multi-provider pipeline, retains raw evidence, resolves supported claims, exposes contradictions, and answers questions only from the active claim ledger.
+TraceForge is a recruiter-testable AI and data engineering project. Give it a public company domain and it runs a typed multi-provider pipeline, retains raw evidence, joins the target to a normalized public-company corpus, resolves supported claims, exposes contradictions, and answers questions only from the active claim ledger.
 
 **Live demo:** [traceforge-ai.korivichetan5.chatgpt.site](https://traceforge-ai.korivichetan5.chatgpt.site)
 
@@ -8,11 +8,11 @@ It is an investigation tool, not a static dashboard. Try a domain, inspect each 
 
 ## 90-Second Recruiter Test
 
-1. Open the live demo and investigate `stripe.com`, `notion.so`, or a company you know.
-2. Inspect connector latency and distinguish populated success from provider error or no-match.
-3. Open claim citations, then inject a conflict and watch the quality metrics change.
-4. Ask a question the evidence can answer, followed by one it cannot.
-5. Export the evidence package and inspect the raw-to-canonical lineage.
+1. Open the live demo and investigate `stripe.com`, `resend.com`, or a company you know.
+2. Try `resend.com` or `infisical.com` to inspect the D1 corpus match, provenance, and peer cohort.
+3. Inspect connector latency and distinguish populated success from provider error or no-match.
+4. Open claim citations, then inject a conflict and watch the quality metrics change.
+5. Ask a question the evidence can answer, followed by one it cannot, then export the evidence package.
 
 ## What It Demonstrates
 
@@ -21,7 +21,8 @@ It is an investigation tool, not a static dashboard. Try a domain, inspect each 
 - Evidence lineage from raw provider records to canonical claims
 - Gemini extraction constrained to collected URLs, with deterministic fallback
 - Conflict preservation rather than silent last-write-wins resolution
-- Background execution, progress events, six-hour cache, and atomic run persistence
+- A reproducible allowlist ETL that strips person and client-only fields before publication
+- D1-backed company lookup, cohort retrieval, and durable investigation summaries
 - A dependency-free Python API, responsive frontend, tests, health check, and container build
 - A Cloudflare Worker deployment adapter with encrypted server-side provider configuration
 
@@ -70,12 +71,20 @@ Secrets are server-side only and are excluded from exports and API responses.
 | GitHub | Adds a public engineering signal | API quota falls back to a verifiable public organization page |
 | Gemini | Converts evidence into a strict claim schema | Malformed or unavailable output uses deterministic extraction |
 
-This is an interactive, low-volume investigation workload, so Kafka, Spark, and a warehouse would add operational theater rather than useful capability. The scaling path is documented explicitly: queue workers for long jobs, Redis for shared run state, and object storage or Postgres for durable evidence. That boundary is intentional and testable.
+This is an interactive, low-volume investigation workload, so Kafka and Spark would add operational theater rather than useful capability. D1 provides the relational serving layer and run warehouse; the scaling path is queue workers for long jobs and object storage for full raw evidence. That boundary is intentional and testable.
+
+## Public Corpus
+
+The hosted seed contains 2,198 domain-keyed company records derived from the public Y Combinator directory export already present in the data workspace. `scripts/build_public_corpus.py` is the reproducible privacy boundary: it keeps an explicit company-level allowlist and excludes emails, phone numbers, people, LinkedIn profiles, internal fit scores, and client segmentation labels.
+
+The deployed Worker exposes an idempotent `POST /api/corpus/seed` initializer. It creates the D1 schema, inserts any missing records, and can safely resume after an interrupted batch. `GET /api/corpus/stats` reports the populated record count.
 
 ## API
 
 ```text
 GET  /health
+GET  /api/corpus/stats
+POST /api/corpus/seed
 POST /api/investigations
 GET  /api/investigations/{run_id}
 POST /api/investigations/{run_id}/conflict
@@ -86,4 +95,4 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for contracts, trust boundaries
 
 ## Responsible Use
 
-TraceForge collects public company-level information. It intentionally does not enrich personal contact information, infer private attributes, or hide unsupported results behind generated prose.
+TraceForge collects public company-level information. It intentionally does not publish ASA, Hirebooth, OneSource, or SIX client/contact exports; enrich personal contact information; infer private attributes; or hide unsupported results behind generated prose.

@@ -20,7 +20,16 @@ export default {
           status: "ok",
           service: "traceforge-worker",
           providers: configuredProviders(env),
+          storage: { d1: Boolean(env.DB) },
         });
+      }
+
+      if (url.pathname === "/api/corpus/stats" && request.method === "GET") {
+        return json(await corpusStats(env));
+      }
+
+      if (url.pathname === "/api/corpus/seed" && request.method === "POST") {
+        return json(await seedCorpus(env, url), 201);
       }
 
       if (url.pathname === "/api/investigations" && request.method === "POST") {
@@ -75,10 +84,13 @@ async function investigate(domain, env) {
     event("discover", "Three public provider adapters scheduled", "success"),
   ];
   const collectStarted = Date.now();
-  const providers = await Promise.all([
-    runFirecrawl(domain, env),
-    runTavily(domain, env),
-    runGithub(domain, env),
+  const [providers, corpus] = await Promise.all([
+    Promise.all([
+      runFirecrawl(domain, env),
+      runTavily(domain, env),
+      runGithub(domain, env),
+    ]),
+    lookupCorpus(domain, env),
   ]);
   for (const provider of providers) {
     events.push(event(provider.provider, `${provider.status.replaceAll("_", " ")} · ${provider.records.length} records · ${provider.duration_ms}ms`, provider.status === "success" ? "success" : "warning"));
@@ -90,9 +102,10 @@ async function investigate(domain, env) {
   events.push(event("resolve", `Resolved ${extraction.claims.length} canonical claims`, "success"));
   const quality = qualitySummary(extraction.claims, evidence);
   events.push(event("brief", `Evidence coverage ${quality.citation_coverage}%`, "success"));
+  events.push(event("corpus", corpus.status === "matched" ? `Matched ${domain} in the public company corpus` : corpus.message, corpus.status === "unavailable" ? "warning" : "info"));
   const finished = Date.now();
 
-  return {
+  const run = {
     id,
     domain,
     status: "complete",
@@ -113,9 +126,141 @@ async function investigate(domain, env) {
     claims: extraction.claims,
     model: extraction.model,
     quality,
+    corpus,
     events,
     error: null,
   };
+  run.warehouse = await persistRun(run, env);
+  run.events.push(event("warehouse", run.warehouse.persisted ? "Run summary persisted to D1" : run.warehouse.message, run.warehouse.persisted ? "success" : "warning"));
+  return run;
+}
+
+async function ensureDatabase(env) {
+  if (!env.DB) throw new Error("D1 binding is not configured");
+  await env.DB.exec(`
+    CREATE TABLE IF NOT EXISTS public_companies (
+      domain TEXT PRIMARY KEY,
+      company_name TEXT NOT NULL,
+      website TEXT,
+      founded_year INTEGER,
+      funding_stage TEXT,
+      employee_count INTEGER,
+      country TEXT,
+      industry TEXT,
+      subindustry TEXT,
+      one_liner TEXT,
+      source TEXT NOT NULL,
+      source_proof TEXT,
+      source_url TEXT NOT NULL,
+      loaded_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_public_companies_industry ON public_companies(industry);
+    CREATE INDEX IF NOT EXISTS idx_public_companies_country ON public_companies(country);
+    CREATE TABLE IF NOT EXISTS investigation_runs (
+      id TEXT PRIMARY KEY,
+      domain TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      completed_at TEXT NOT NULL,
+      provider_successes INTEGER NOT NULL,
+      evidence_records INTEGER NOT NULL,
+      claim_count INTEGER NOT NULL,
+      citation_coverage INTEGER NOT NULL,
+      average_confidence INTEGER NOT NULL,
+      corpus_status TEXT NOT NULL,
+      summary_json TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_investigation_runs_domain ON investigation_runs(domain);
+  `);
+}
+
+async function corpusStats(env) {
+  if (!env.DB) return { status: "unavailable", record_count: 0, message: "D1 binding is not configured" };
+  try {
+    await ensureDatabase(env);
+    const row = await env.DB.prepare("SELECT COUNT(*) AS count FROM public_companies").first();
+    return { status: Number(row?.count || 0) ? "ready" : "empty", record_count: Number(row?.count || 0), source: "Y Combinator public directory" };
+  } catch (error) {
+    return { status: "unavailable", record_count: 0, message: cleanError(error) };
+  }
+}
+
+async function seedCorpus(env, requestUrl) {
+  if (!env.DB) throw new UserError("D1 storage is not configured for this deployment");
+  await ensureDatabase(env);
+  const current = await env.DB.prepare("SELECT COUNT(*) AS count FROM public_companies").first();
+  const assetUrl = new URL("/data/yc-public-companies.json", requestUrl);
+  const response = await env.ASSETS.fetch(new Request(assetUrl));
+  if (!response.ok) throw new Error("Public corpus seed asset is unavailable");
+  const records = await response.json();
+  if (Number(current?.count || 0) >= records.length) {
+    return { status: "ready", record_count: Number(current.count), inserted: 0, source: "Y Combinator public directory" };
+  }
+  const loadedAt = new Date().toISOString();
+  const statement = env.DB.prepare(`INSERT OR IGNORE INTO public_companies
+    (domain, company_name, website, founded_year, funding_stage, employee_count, country, industry, subindustry, one_liner, source, source_proof, source_url, loaded_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+  for (let offset = 0; offset < records.length; offset += 250) {
+    const batch = records.slice(offset, offset + 250).map((record) => statement.bind(
+      record.domain, record.company_name, record.website, record.founded_year, record.funding_stage,
+      record.employee_count, record.country, record.industry, record.subindustry, record.one_liner,
+      record.source, record.source_proof, record.yc_url, loadedAt,
+    ));
+    await env.DB.batch(batch);
+  }
+  const result = await env.DB.prepare("SELECT COUNT(*) AS count FROM public_companies").first();
+  return { status: "ready", record_count: Number(result?.count || 0), inserted: Number(result?.count || 0) - Number(current?.count || 0), source: "Y Combinator public directory" };
+}
+
+async function lookupCorpus(domain, env) {
+  if (!env.DB) return { status: "unavailable", record_count: 0, record: null, peers: [], message: "Cloud corpus is not configured" };
+  try {
+    await ensureDatabase(env);
+    const countRow = await env.DB.prepare("SELECT COUNT(*) AS count FROM public_companies").first();
+    const recordCount = Number(countRow?.count || 0);
+    if (!recordCount) return { status: "empty", record_count: 0, record: null, peers: [], message: "Public corpus is awaiting its first seed" };
+    const record = await env.DB.prepare("SELECT * FROM public_companies WHERE domain = ?").bind(domain).first();
+    if (!record) return { status: "no_match", record_count: recordCount, record: null, peers: [], message: `No ${domain} record in the public accelerator corpus` };
+    const peerResult = await env.DB.prepare(`SELECT domain, company_name, funding_stage, country, industry, employee_count, source_url
+      FROM public_companies WHERE domain <> ? AND industry = ?
+      ORDER BY CASE WHEN country = ? THEN 0 ELSE 1 END, ABS(COALESCE(employee_count, 0) - COALESCE(?, 0)), company_name LIMIT 4`)
+      .bind(domain, record.industry, record.country, record.employee_count).all();
+    return {
+      status: "matched",
+      record_count: recordCount,
+      record: publicCompany(record),
+      peers: (peerResult.results || []).map(publicCompany),
+      message: `Matched ${domain} in the public accelerator corpus`,
+    };
+  } catch (error) {
+    return { status: "unavailable", record_count: 0, record: null, peers: [], message: cleanError(error) };
+  }
+}
+
+function publicCompany(record) {
+  const fields = ["domain", "company_name", "website", "founded_year", "funding_stage", "employee_count", "country", "industry", "subindustry", "one_liner", "source", "source_proof", "source_url"];
+  return Object.fromEntries(fields.map((field) => [field, record[field] ?? null]));
+}
+
+async function persistRun(run, env) {
+  if (!env.DB) return { persisted: false, message: "D1 warehouse is not configured" };
+  try {
+    await ensureDatabase(env);
+    const summary = {
+      model: run.model,
+      quality: run.quality,
+      providers: run.providers,
+      claims: run.claims.map(({ field, value, confidence, status, source_urls }) => ({ field, value, confidence, status, source_urls })),
+    };
+    await env.DB.prepare(`INSERT OR REPLACE INTO investigation_runs
+      (id, domain, created_at, completed_at, provider_successes, evidence_records, claim_count, citation_coverage, average_confidence, corpus_status, summary_json)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+      .bind(run.id, run.domain, run.created_at, run.updated_at, run.providers.filter((item) => item.status === "success").length,
+        run.quality.evidence_records, run.quality.claims, run.quality.citation_coverage, run.quality.average_confidence,
+        run.corpus.status, JSON.stringify(summary)).run();
+    return { persisted: true, engine: "D1", message: "Run summary persisted to D1" };
+  } catch (error) {
+    return { persisted: false, message: cleanError(error) };
+  }
 }
 
 async function runFirecrawl(domain, env) {

@@ -50,10 +50,11 @@
         </div>
         <div class="welcome-proof" aria-label="Demo capabilities">
           <span><b>3</b> typed source adapters</span>
+          <span><b>2.2K</b> public corpus rows</span>
           <span><b>100%</b> citations required</span>
           <span><b>0</b> unsupported claims accepted</span>
         </div>
-        <p class="welcome-stack"><strong>LIVE STACK</strong> Firecrawl · Tavily · GitHub · Gemini · Cloudflare Workers</p>
+        <p class="welcome-stack"><strong>LIVE STACK</strong> Firecrawl · Tavily · GitHub · Gemini · Workers · D1</p>
       </div>
       <a class="welcome-scroll" href="#methodology">Explore the engineering <span aria-hidden="true">↓</span></a>
     </section>
@@ -78,8 +79,8 @@
         <div class="examples">
           <span>Or use a recruiter-ready example</span>
           <button data-domain="stripe.com">stripe.com</button>
-          <button data-domain="notion.so">notion.so</button>
-          <button data-domain="razorpay.com">razorpay.com</button>
+          <button data-domain="resend.com">resend.com</button>
+          <button data-domain="infisical.com">infisical.com</button>
         </div>
       </div>
 
@@ -142,6 +143,14 @@
               <div id="profileFacts" class="profile-facts"></div>
             </section>
 
+            <section id="corpusPanel" class="corpus-panel hidden">
+              <div class="corpus-head">
+                <div><p class="section-kicker">Cloud data plane</p><h2>Public corpus match</h2></div>
+                <span id="warehouseBadge" class="warehouse-badge">Checking D1</span>
+              </div>
+              <div id="corpusBody"></div>
+            </section>
+
             <section class="claims-section">
               <div class="section-head">
                 <div><p class="section-kicker">Canonical claim ledger</p><h2>What the evidence supports</h2></div>
@@ -170,7 +179,7 @@
 
     <section id="methodology" class="methodology">
       <div><p class="section-kicker">Engineering method</p><h2>Designed like a data product, not a chatbot.</h2></div>
-      <div class="method-grid"><p><b>Typed connectors</b><span>Every source reports health, latency, status, records, and errors through one contract.</span></p><p><b>Immutable evidence</b><span>Raw provider evidence is retained separately from normalized claims.</span></p><p><b>Constrained AI</b><span>The model may cite only URLs gathered during the active run.</span></p><p><b>Honest quality</b><span>Success, no-match, provider error, conflicts, and fallback behavior remain visible.</span></p></div>
+      <div class="method-grid"><p><b>Typed connectors</b><span>Every source reports health, latency, status, records, and errors through one contract.</span></p><p><b>Cloud corpus</b><span>Public company records are allowlisted, normalized by domain, and served from D1 with source lineage.</span></p><p><b>Constrained AI</b><span>The model may cite only URLs gathered during the active run.</span></p><p><b>Honest quality</b><span>Success, no-match, provider error, conflicts, and fallback behavior remain visible.</span></p></div>
     </section>
 
     <footer class="project-footer">

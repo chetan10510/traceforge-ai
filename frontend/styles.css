@@ -183,6 +183,36 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
 .briefing-band > p:not(.section-kicker) { max-width: 780px; margin: 9px 0 0; color: var(--muted); font-size: 12px; line-height: 1.65; }
 .profile-facts { display: flex; gap: 7px; margin-top: 15px; flex-wrap: wrap; }
 .profile-facts span { padding: 6px 8px; border: 1px solid var(--line); border-radius: 4px; color: #4c5962; background: white; font-size: 9px; }
+.corpus-panel { padding: 22px 0; border-bottom: 1px solid var(--line); }
+.corpus-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
+.corpus-head .section-kicker { margin-bottom: 5px; }
+.corpus-head h2 { margin: 0; font-size: 16px; }
+.warehouse-badge { padding: 6px 8px; border: 1px solid var(--line); border-radius: 4px; color: var(--muted); background: white; font: 600 7px "JetBrains Mono", monospace; }
+.warehouse-badge.persisted { color: var(--forest); border-color: #a7cfc4; background: var(--forest-soft); }
+.warehouse-badge.degraded { color: #765022; border-color: #dec79e; background: var(--amber-soft); }
+.corpus-record { margin-top: 13px; border: 1px solid var(--line); border-radius: 6px; background: white; }
+.corpus-identity { display: grid; grid-template-columns: 34px minmax(0,1fr); gap: 11px; padding: 13px; }
+.corpus-mark { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 4px; color: var(--forest); background: var(--forest-soft); font: 600 8px "JetBrains Mono", monospace; }
+.corpus-identity a { color: var(--ink); text-decoration: none; font-size: 11px; font-weight: 700; }
+.corpus-identity a:hover { color: var(--forest); }
+.corpus-identity p { margin: 4px 0 0; color: var(--muted); font-size: 9px; line-height: 1.5; }
+.corpus-facts { display: flex; gap: 6px; padding: 0 13px 13px; flex-wrap: wrap; }
+.corpus-facts span { padding: 5px 7px; border: 1px solid var(--line); border-radius: 4px; color: #536069; background: #fafbfb; font-size: 8px; }
+.corpus-lineage { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); border-top: 1px solid var(--line); }
+.corpus-lineage span { min-width: 0; padding: 10px 13px; color: var(--soft); font-size: 7px; }
+.corpus-lineage span:not(:last-child) { border-right: 1px solid var(--line); }
+.corpus-lineage b { display: block; overflow: hidden; margin-bottom: 2px; color: var(--ink); text-overflow: ellipsis; white-space: nowrap; font: 600 8px "JetBrains Mono", monospace; }
+.peer-strip { margin-top: 12px; }
+.peer-strip > p { margin: 0 0 7px; color: var(--soft); text-transform: uppercase; font: 600 7px "JetBrains Mono", monospace; }
+.peer-strip > div { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 6px; }
+.peer-strip a { min-width: 0; padding: 8px; border: 1px solid var(--line); border-radius: 4px; color: var(--ink); background: white; text-decoration: none; }
+.peer-strip strong, .peer-strip span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.peer-strip strong { font-size: 8px; }
+.peer-strip span { margin-top: 3px; color: var(--soft); font: 500 7px "JetBrains Mono", monospace; }
+.corpus-empty { margin-top: 12px; padding: 13px; border: 1px solid var(--line); border-radius: 6px; background: white; }
+.corpus-empty strong { font-size: 10px; }
+.corpus-empty p { margin: 5px 0; color: var(--muted); font-size: 9px; }
+.corpus-empty span { color: var(--soft); font: 500 7px "JetBrains Mono", monospace; }
 .claims-section { padding-top: 23px; }
 .section-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 25px; }
 .section-head h2 { margin: 0; font-size: 16px; }
@@ -308,6 +338,11 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
   .quality-strip span { text-align: left; }
   .claim-row { grid-template-columns: 80px 1fr 56px; }
   .claim-sources { display: none; }
+  .corpus-head { display: block; }
+  .warehouse-badge { display: inline-block; margin-top: 9px; }
+  .corpus-lineage { grid-template-columns: 1fr; }
+  .corpus-lineage span:not(:last-child) { border-right: 0; border-bottom: 1px solid var(--line); }
+  .peer-strip > div { grid-template-columns: 1fr 1fr; }
   .ask-bar { position: static; display: block; padding: 12px 14px; }
   .ask-bar form { margin-top: 10px; }
   .methodology { grid-template-columns: 1fr; gap: 30px; padding: 50px 18px; }

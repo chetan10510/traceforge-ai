@@ -32,6 +32,9 @@ const elements = {
   companyName: $("#companyName"),
   companySummary: $("#companySummary"),
   profileFacts: $("#profileFacts"),
+  corpusPanel: $("#corpusPanel"),
+  corpusBody: $("#corpusBody"),
+  warehouseBadge: $("#warehouseBadge"),
   claimsList: $("#claimsList"),
   coverageMetric: $("#coverageMetric"),
   confidenceMetric: $("#confidenceMetric"),
@@ -274,12 +277,37 @@ function renderResults(run) {
     .filter(Boolean);
   elements.profileFacts.innerHTML = facts.map((item) => `<span><b>${escapeHtml(titleCase(item.field))}</b> · ${escapeHtml(displayValue(item.value))}</span>`).join("")
     + `<span><b>AI extraction</b> · ${escapeHtml(titleCase(run.model?.status || "not configured"))}</span>`;
+  renderCorpus(run.corpus, run.warehouse);
 
   const quality = run.quality || {};
   elements.coverageMetric.textContent = `${quality.citation_coverage || 0}%`;
   elements.confidenceMetric.textContent = `${quality.average_confidence || 0}%`;
   elements.conflictMetric.textContent = quality.conflicts || 0;
   renderClaims(claims);
+}
+
+function renderCorpus(corpus = {}, warehouse = {}) {
+  elements.corpusPanel.classList.remove("hidden");
+  elements.warehouseBadge.className = `warehouse-badge ${warehouse.persisted ? "persisted" : "degraded"}`;
+  elements.warehouseBadge.textContent = warehouse.persisted ? "Run persisted · D1" : "Run storage unavailable";
+  const recordCount = Number(corpus.record_count || 0).toLocaleString();
+  if (corpus.status !== "matched" || !corpus.record) {
+    elements.corpusBody.innerHTML = `<div class="corpus-empty"><strong>${escapeHtml(titleCase(corpus.status || "unavailable"))}</strong><p>${escapeHtml(corpus.message || "No cloud corpus result was returned.")}</p><span>${recordCount} indexed public company records · live web evidence remains independent</span></div>`;
+    return;
+  }
+
+  const record = corpus.record;
+  const sourceUrl = isSafeHttpUrl(record.source_url) ? record.source_url : "#";
+  const facts = [record.funding_stage, record.country, record.industry, record.employee_count ? `${record.employee_count} employees at source snapshot` : null].filter(Boolean);
+  const peers = (corpus.peers || []).map((peer) => {
+    const peerUrl = isSafeHttpUrl(peer.source_url) ? peer.source_url : "#";
+    return `<a href="${escapeAttribute(peerUrl)}" target="_blank" rel="noopener noreferrer"><strong>${escapeHtml(peer.company_name)}</strong><span>${escapeHtml(peer.domain)}</span></a>`;
+  }).join("");
+  elements.corpusBody.innerHTML = `<div class="corpus-record">
+    <div class="corpus-identity"><span class="corpus-mark">DB</span><div><a href="${escapeAttribute(sourceUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(record.company_name)}</a><p>${escapeHtml(record.one_liner || "Public company directory record")}</p></div></div>
+    <div class="corpus-facts">${facts.map((fact) => `<span>${escapeHtml(fact)}</span>`).join("")}</div>
+    <div class="corpus-lineage"><span><b>${recordCount}</b> indexed records</span><span><b>${escapeHtml(record.source || "Public directory")}</b> source</span><span><b>${escapeHtml(record.source_proof || "Directory record")}</b> provenance</span></div>
+  </div>${peers ? `<div class="peer-strip"><p>Nearest industry peers</p><div>${peers}</div></div>` : ""}`;
 }
 
 function renderClaims(claims) {
