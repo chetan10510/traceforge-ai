@@ -6,6 +6,14 @@ TraceForge is a recruiter-testable AI and data engineering project. Give it a pu
 
 It is an investigation tool, not a static dashboard. Try a domain, inspect each connector, inject a conflict, challenge the evidence, and export the full run as JSON.
 
+## 90-Second Recruiter Test
+
+1. Open the live demo and investigate `stripe.com`, `notion.so`, or a company you know.
+2. Inspect connector latency and distinguish populated success from provider error or no-match.
+3. Open claim citations, then inject a conflict and watch the quality metrics change.
+4. Ask a question the evidence can answer, followed by one it cannot.
+5. Export the evidence package and inspect the raw-to-canonical lineage.
+
 ## What It Demonstrates
 
 - Parallel data ingestion from Firecrawl, Tavily, and GitHub
@@ -52,6 +60,17 @@ Secrets are server-side only and are excluded from exports and API responses.
 ## Runtime Targets
 
 `backend/` provides the dependency-free Python development and container runtime. `worker/` provides the production serverless adapter used by the live portfolio deployment. Both expose the same browser-facing API contract and evidence rules.
+
+## Integration Decisions
+
+| Component | Why it exists | Visible failure behavior |
+| --- | --- | --- |
+| Firecrawl | Captures first-party website evidence | `no_match` or `error`; no synthetic homepage data |
+| Tavily | Discovers independent public sources | Search records remain separate and individually cited |
+| GitHub | Adds a public engineering signal | API quota falls back to a verifiable public organization page |
+| Gemini | Converts evidence into a strict claim schema | Malformed or unavailable output uses deterministic extraction |
+
+This is an interactive, low-volume investigation workload, so Kafka, Spark, and a warehouse would add operational theater rather than useful capability. The scaling path is documented explicitly: queue workers for long jobs, Redis for shared run state, and object storage or Postgres for durable evidence. That boundary is intentional and testable.
 
 ## API
 

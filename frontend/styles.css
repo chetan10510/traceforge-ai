@@ -37,6 +37,8 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
 .environment { display: inline-flex; align-items: center; gap: 7px; padding: 6px 9px; border: 1px solid var(--line); border-radius: 14px; color: var(--muted); background: #fafbfb; font: 500 9px "JetBrains Mono", monospace; }
 .environment i { width: 6px; height: 6px; border-radius: 50%; background: #2c9b76; box-shadow: 0 0 0 3px rgba(44,155,118,.12); }
 .header-actions { display: flex; align-items: center; justify-content: flex-end; gap: 14px; justify-self: end; }
+.owner-link { color: var(--ink); text-decoration: none; font-size: 10px; font-weight: 700; }
+.owner-link:hover { color: var(--forest); }
 .docs-link { color: var(--muted); text-decoration: none; font-size: 11px; font-weight: 600; }
 .docs-link:hover { color: var(--forest); }
 .privacy-chip { padding: 6px 8px; border-radius: 4px; color: var(--forest); background: var(--forest-soft); font-size: 9px; font-weight: 700; }
@@ -203,6 +205,9 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
 .method-grid b, .method-grid span { display: block; }
 .method-grid b { font-size: 11px; }
 .method-grid span { margin-top: 6px; color: var(--muted); font-size: 10px; line-height: 1.55; }
+.project-footer { min-height: 58px; display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 0 max(28px, calc((100vw - 1180px) / 2)); border-top: 1px solid var(--line); color: var(--muted); background: white; font-size: 9px; }
+.project-footer a { color: var(--forest); text-decoration: none; font-weight: 700; }
+.project-footer nav { display: flex; gap: 18px; }
 
 .answer-dialog { width: min(650px, calc(100% - 30px)); padding: 0; border: 1px solid var(--line-dark); border-radius: 8px; color: var(--ink); background: white; box-shadow: 0 30px 90px rgba(18,32,40,.24); }
 .answer-dialog::backdrop { background: rgba(15,27,33,.4); backdrop-filter: blur(2px); }
@@ -225,7 +230,8 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
 
 @media (max-width: 760px) {
   .app-header { grid-template-columns: 1fr auto; padding: 0 14px; }
-  .header-center, .docs-link, .privacy-chip { display: none; }
+  .header-center, .header-actions .docs-link, .privacy-chip { display: none; }
+  .owner-link { font-size: 9px; }
   .start-view { width: calc(100% - 28px); padding: 45px 0 65px; }
   .start-copy h1 { font-size: 42px; }
   .lede { font-size: 14px; }
@@ -248,4 +254,5 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
   .ask-bar form { margin-top: 10px; }
   .methodology { grid-template-columns: 1fr; gap: 30px; padding: 50px 18px; }
   .method-grid { grid-template-columns: 1fr; }
+  .project-footer { padding: 16px 18px; }
 }
