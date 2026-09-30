@@ -4,6 +4,8 @@ TraceForge is a recruiter-testable AI and data engineering project. Give it a pu
 
 **Live demo:** [traceforge-ai.korivichetan5.chatgpt.site](https://traceforge-ai.korivichetan5.chatgpt.site)
 
+**Companion data engineering project:** [DriftOps AI](https://driftops-ai.korivichetan5.chatgpt.site)
+
 It is an investigation and qualification tool, not a static dashboard. Try a domain, select a market playbook, inspect every criterion and connector, challenge the evidence, and export the full run as JSON.
 
 ## 90-Second Recruiter Test

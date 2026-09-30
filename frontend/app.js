@@ -61,10 +61,24 @@ const elements = {
   answerQuestion: $("#answerQuestion"),
   answerText: $("#answerText"),
   answerCitations: $("#answerCitations"),
+  tourDialog: $("#tourDialog"),
   toast: $("#toast"),
 };
 
 $("#beginBtn").addEventListener("click", showTargetStep);
+$("#tourBtn").addEventListener("click", () => elements.tourDialog.showModal());
+$("#closeTour").addEventListener("click", () => elements.tourDialog.close());
+$("#exploreBtn").addEventListener("click", () => {
+  elements.tourDialog.close();
+  showTargetStep();
+});
+$("#guidedRunBtn").addEventListener("click", () => {
+  elements.tourDialog.close();
+  elements.domainInput.value = "resend.com";
+  state.selectedDomain = "resend.com";
+  state.selectedPlaybook = "engineering_scale";
+  startInvestigation(state.selectedDomain, state.selectedPlaybook);
+});
 $("#welcomeBackBtn").addEventListener("click", showWelcome);
 $(".brand").addEventListener("click", (event) => {
   event.preventDefault();

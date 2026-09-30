@@ -48,7 +48,7 @@
         <p class="welcome-copy">Trace a public company across independent sources, resolve conflicting facts, and inspect every citation behind the final record.</p>
         <div class="welcome-actions">
           <button id="beginBtn" class="primary-action">Begin investigation <span aria-hidden="true">→</span></button>
-          <button class="secondary-action" data-domain="stripe.com">Try Stripe</button>
+          <button id="tourBtn" class="secondary-action">90-second recruiter test</button>
         </div>
         <div class="welcome-proof" aria-label="Demo capabilities">
           <span><b>3</b> typed source adapters</span>
@@ -210,13 +210,28 @@
 
     <footer class="project-footer">
       <span>Built by <a href="https://github.com/chetan10510" target="_blank" rel="noopener noreferrer">Chetan Kumar</a></span>
-      <nav><a href="https://github.com/chetan10510/traceforge-ai" target="_blank" rel="noopener noreferrer">Source code</a><a href="https://github.com/chetan10510/traceforge-ai/blob/main/docs/ARCHITECTURE.md" target="_blank" rel="noopener noreferrer">Architecture</a></nav>
+      <nav><a href="https://driftops-ai.korivichetan5.chatgpt.site" target="_blank" rel="noopener noreferrer">Companion project: DriftOps AI</a><a href="https://github.com/chetan10510/traceforge-ai" target="_blank" rel="noopener noreferrer">Source code</a><a href="https://github.com/chetan10510/traceforge-ai/blob/main/docs/ARCHITECTURE.md" target="_blank" rel="noopener noreferrer">Architecture</a></nav>
     </footer>
   </main>
 
   <dialog id="answerDialog" class="answer-dialog">
     <header><div><span class="ai-mark">✦</span><div><p>EVIDENCE ANSWER</p><h2 id="answerQuestion">Question</h2></div></div><button id="closeAnswer" aria-label="Close">×</button></header>
     <div class="answer-body"><p id="answerText"></p><div id="answerCitations"></div></div>
+  </dialog>
+
+  <dialog id="tourDialog" class="tour-dialog">
+    <header><div><p>RECRUITER MODE</p><h2>See the engineering in 90 seconds</h2></div><button id="closeTour" aria-label="Close">×</button></header>
+    <div class="tour-body">
+      <p class="tour-intro">Run a real public-company investigation, then challenge the result. Every score and answer stays tied to visible evidence.</p>
+      <ol class="tour-steps">
+        <li><span>01</span><div><strong>Run the curated target</strong><p>Resend + Engineering Scale exercises web, search, GitHub, AI extraction, and the public corpus.</p></div></li>
+        <li><span>02</span><div><strong>Audit the decision</strong><p>Open criterion citations and compare the deterministic ICP score with the canonical claim ledger.</p></div></li>
+        <li><span>03</span><div><strong>Test failure behavior</strong><p>Inject a conflict, ask an unsupported question, and verify that uncertainty remains visible.</p></div></li>
+        <li><span>04</span><div><strong>Take the evidence</strong><p>Export the complete run, including provider states, lineage, claims, conflicts, and quality metrics.</p></div></li>
+      </ol>
+      <div class="tour-proof"><span><b>Live</b> Worker + D1 + provider APIs</span><span><b>Guardrail</b> citations required</span><span><b>Output</b> auditable JSON</span></div>
+      <div class="tour-actions"><button id="guidedRunBtn" class="primary-action">Run Resend investigation <span aria-hidden="true">→</span></button><button id="exploreBtn" class="secondary-action">Choose my own company</button></div>
+    </div>
   </dialog>
 
   <div id="toast" class="toast hidden" role="status"></div>
