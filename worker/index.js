@@ -46,7 +46,7 @@ export default {
           status: "ok",
           service: "traceforge-worker",
           providers: configuredProviders(env),
-          storage: { d1: Boolean(env.DB) },
+          storage: { d1: Boolean(env.DB), static_corpus: Array.isArray(env.CORPUS) },
         });
       }
 
@@ -204,6 +204,9 @@ async function ensureDatabase(env) {
 }
 
 async function corpusStats(env) {
+  if (Array.isArray(env.CORPUS)) {
+    return { status: env.CORPUS.length ? "ready" : "empty", record_count: env.CORPUS.length, source: "Y Combinator public directory" };
+  }
   if (!env.DB) return { status: "unavailable", record_count: 0, message: "D1 binding is not configured" };
   try {
     await ensureDatabase(env);
@@ -215,6 +218,9 @@ async function corpusStats(env) {
 }
 
 async function seedCorpus(env, requestUrl) {
+  if (Array.isArray(env.CORPUS)) {
+    return { status: "ready", record_count: env.CORPUS.length, inserted: 0, source: "Bundled Y Combinator public directory" };
+  }
   if (!env.DB) throw new UserError("D1 storage is not configured for this deployment");
   await ensureDatabase(env);
   const current = await env.DB.prepare("SELECT COUNT(*) AS count FROM public_companies").first();
@@ -242,6 +248,12 @@ async function seedCorpus(env, requestUrl) {
 }
 
 async function lookupCorpus(domain, env) {
+  if (Array.isArray(env.CORPUS)) {
+    const record = env.CORPUS.find((item) => item.domain === domain);
+    if (!record) return { status: "no_match", record_count: env.CORPUS.length, record: null, peers: [], message: `No ${domain} record in the public accelerator corpus` };
+    const peers = env.CORPUS.filter((item) => item.domain !== domain && item.industry === record.industry).slice(0, 3);
+    return { status: "matched", record_count: env.CORPUS.length, record, peers, message: `Matched ${domain} in the public accelerator corpus` };
+  }
   if (!env.DB) return { status: "unavailable", record_count: 0, record: null, peers: [], message: "Cloud corpus is not configured" };
   try {
     await ensureDatabase(env);

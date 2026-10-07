@@ -2,9 +2,11 @@
 
 TraceForge is a recruiter-testable AI and data engineering project. Give it a public company domain, choose an ICP playbook, and it runs a typed multi-provider pipeline that qualifies the account with explicit rules, retains raw evidence, joins a normalized public-company corpus, resolves supported claims, and answers questions only from the active claim ledger.
 
-**Live demo:** [traceforge-ai.korivichetan5.chatgpt.site](https://traceforge-ai.korivichetan5.chatgpt.site)
+**Live demo:** [traceforge-ai-chetan.vercel.app](https://traceforge-ai-chetan.vercel.app)
 
-**Companion data engineering project:** [DriftOps AI](https://driftops-ai.korivichetan5.chatgpt.site)
+**Fallback deployment:** [traceforge-ai.korivichetan5.chatgpt.site](https://traceforge-ai.korivichetan5.chatgpt.site)
+
+**Companion data engineering project:** [DriftOps AI](https://driftops-ai.vercel.app)
 
 It is an investigation and qualification tool, not a static dashboard. Try a domain, select a market playbook, inspect every criterion and connector, challenge the evidence, and export the full run as JSON.
 
