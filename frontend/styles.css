@@ -227,6 +227,7 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
 .corpus-head h2 { margin: 0; font-size: 16px; }
 .warehouse-badge { padding: 6px 8px; border: 1px solid var(--line); border-radius: 4px; color: var(--muted); background: white; font: 600 7px "JetBrains Mono", monospace; }
 .warehouse-badge.persisted { color: var(--forest); border-color: #a7cfc4; background: var(--forest-soft); }
+.warehouse-badge.session { color: var(--cyan); border-color: #aacbd2; background: var(--blue-soft); }
 .warehouse-badge.degraded { color: #765022; border-color: #dec79e; background: var(--amber-soft); }
 .corpus-record { margin-top: 13px; border: 1px solid var(--line); border-radius: 6px; background: white; }
 .corpus-identity { display: grid; grid-template-columns: 34px minmax(0,1fr); gap: 11px; padding: 13px; }

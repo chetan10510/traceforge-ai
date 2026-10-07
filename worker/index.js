@@ -161,7 +161,8 @@ async function investigate(domain, playbookId, env) {
     error: null,
   };
   run.warehouse = await persistRun(run, env);
-  run.events.push(event("warehouse", run.warehouse.persisted ? "Run summary persisted to D1" : run.warehouse.message, run.warehouse.persisted ? "success" : "warning"));
+  const warehouseTone = run.warehouse.persisted ? "success" : run.warehouse.mode === "session" ? "info" : "warning";
+  run.events.push(event("warehouse", run.warehouse.message, warehouseTone));
   return run;
 }
 
@@ -284,6 +285,7 @@ function publicCompany(record) {
 }
 
 async function persistRun(run, env) {
+  if (Array.isArray(env.CORPUS)) return { persisted: false, mode: "session", message: "Session run is exportable; durable history is available on the D1 deployment" };
   if (!env.DB) return { persisted: false, message: "D1 warehouse is not configured" };
   try {
     await ensureDatabase(env);

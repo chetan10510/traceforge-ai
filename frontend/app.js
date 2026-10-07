@@ -365,8 +365,9 @@ function criterionMarker(status) {
 
 function renderCorpus(corpus = {}, warehouse = {}) {
   elements.corpusPanel.classList.remove("hidden");
-  elements.warehouseBadge.className = `warehouse-badge ${warehouse.persisted ? "persisted" : "degraded"}`;
-  elements.warehouseBadge.textContent = warehouse.persisted ? "Run persisted · D1" : "Run storage unavailable";
+  const sessionMode = warehouse.mode === "session";
+  elements.warehouseBadge.className = `warehouse-badge ${warehouse.persisted ? "persisted" : sessionMode ? "session" : "degraded"}`;
+  elements.warehouseBadge.textContent = warehouse.persisted ? "Run persisted · D1" : sessionMode ? "Session run · export ready" : "Run storage unavailable";
   const recordCount = Number(corpus.record_count || 0).toLocaleString();
   if (corpus.status !== "matched" || !corpus.record) {
     elements.corpusBody.innerHTML = `<div class="corpus-empty"><strong>${escapeHtml(titleCase(corpus.status || "unavailable"))}</strong><p>${escapeHtml(corpus.message || "No cloud corpus result was returned.")}</p><span>${recordCount} indexed public company records · live web evidence remains independent</span></div>`;
